@@ -7,4 +7,6 @@ import java.util.List;
 @FunctionalInterface
 public interface ApiCallable {
     List<SearchResult> callApi(String uri_value, String search_filter);
+
 }
+

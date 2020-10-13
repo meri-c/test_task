@@ -1,6 +1,6 @@
 package com.meri.test_task.controller;
 
-import com.meri.test_task.service.ApiRunnable;
+import com.meri.test_task.service.ApiSupplier;
 import com.meri.test_task.service.MainService;
 import com.meri.test_task.service.service_pojo.ApiResult;
 import lombok.extern.java.Log;
@@ -9,14 +9,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URISyntaxException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Log
 @RestController("/")
 public class MainController {
-    private final String uri_first = "http://localhost:8090/first";
-    private final String uri_second = "http://localhost:8090/second";
+    public static final String URI_FIRST = "http://localhost:8090/first";
+    public static final String URI_SECOND = "http://localhost:8090/second";
 
-    final String preset_search_filter = "[\n" +
+    public final static String PRESET_SEARCH_FILTER = "[\n" +
             "  {\n" +
             "    \"street\": \"Pushkin st. 59\",\n" +
             "    \"city\": \"Odessa\",\n" +
@@ -31,10 +33,10 @@ public class MainController {
     private final MainService mainService;
 
     @Autowired
-    ApiRunnable runFirstApi;
+    ApiSupplier firstApiSupplier;
 
     @Autowired
-    ApiRunnable runSecondApi;
+    ApiSupplier secondApiSupplier;
 
 
     public MainController(MainService mainService) {
@@ -48,29 +50,23 @@ public class MainController {
 
         log.info("=================START===================");
 
+        //call two threads for one filter request
+        CompletableFuture<ApiResult> first = CompletableFuture.supplyAsync(() -> {
+            return firstApiSupplier.get(mainService);
+        });
 
-        //create runnables for threads
-        runFirstApi.setApiRunnableParams(mainService::callFirstApi, "first", uri_first, preset_search_filter);
-        runSecondApi.setApiRunnableParams(mainService::callSecondApi, "second", uri_second, preset_search_filter);
+        CompletableFuture<ApiResult> second = CompletableFuture.supplyAsync(() -> {
+            return secondApiSupplier.get(mainService);
+        });
 
+        CompletableFuture<ApiResult> combinedResult = first.thenCombine(second, MainService::combineTwoResults);
 
-        //create threads
-        Thread first = new Thread(runFirstApi, "first");
-        Thread second = new Thread(runSecondApi, "second");
-
-        first.start();
-        second.start();
-
-        //for main thread to wait
         try {
-            first.join();
-            second.join();
-        } catch (InterruptedException e) {
+            return combinedResult.get();
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
-
-        return mainService.combineApiResults(runFirstApi.getApiResult(), runSecondApi.getApiResult());
-
+        return null;
     }
 
 }

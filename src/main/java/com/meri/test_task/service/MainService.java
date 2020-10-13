@@ -5,7 +5,6 @@ import com.meri.test_task.entity.CacheElastic;
 import com.meri.test_task.repository.ApiLogRepository;
 import com.meri.test_task.repository.CacheElasticRepository;
 import com.meri.test_task.service.service_pojo.ApiResult;
-import com.meri.test_task.service.service_pojo.PriceResult;
 import com.meri.test_task.service.service_pojo.SearchResult;
 import lombok.extern.java.Log;
 import org.json.JSONArray;
@@ -23,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Log
@@ -38,6 +38,27 @@ public class MainService {
         this.cacheElasticRepository = cacheElasticRepository;
     }
 
+    public static ApiResult combineTwoResults(ApiResult first_result, ApiResult second_result){
+        log.info("combining results");
+        ApiResult commonResult = new ApiResult();
+        /*commonResult.setCountry(first_result.getCountry()||first_result.getCountry());*/
+        if(first_result.getCountry() == null && second_result.getCountry() == null){
+            return commonResult;
+        }
+        if(first_result.getCountry() == null){
+            return second_result;
+        }
+        commonResult.setCountry(first_result.getCountry());
+        commonResult.setStreet(first_result.getStreet());
+        commonResult.setCity(first_result.getCity());
+
+        commonResult.setPrices(new ArrayList<>());
+        commonResult.getPrices().addAll(first_result.getPrices());
+        commonResult.getPrices().addAll(second_result.getPrices());
+
+        return commonResult;
+    }
+
     void saveApiLog(ApiLog apiLog) {
         log.info(apiLog.getApi_name() + " saving log");
         apiLogRepository.save(apiLog);
@@ -48,26 +69,17 @@ public class MainService {
         cacheElasticRepository.save(cacheElastic);
     }
 
-    public ApiResult combineApiResults(ApiResult apiResult1, ApiResult apiResult2){
-        List<PriceResult> prices = new ArrayList<>();
-        prices.addAll(apiResult1.getPrices());
-        prices.addAll(apiResult2.getPrices());
-        return new ApiResult(apiResult1.getStreet(), apiResult1.getCity(), apiResult1.getCountry(), prices);
-    }
-
-
     //call post search request to "first" api with json body, get xml in return, process to SearchResult list obj
     public List<SearchResult> callFirstApi(String uri_value, String search_filter) {
         log.info("In call firstApi");
         RestTemplate restTemplate = new RestTemplate();
 
-        URI uri;
-        try {
-            uri = new URI(uri_value);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return null;
+
+        URI uri = stringToUriConverting(uri_value);
+        if(uri == null){
+            return Collections.emptyList();
         }
+
 
         RequestEntity request = RequestEntity.post(uri)
                 .contentType(MediaType.APPLICATION_XML)
@@ -80,20 +92,15 @@ public class MainService {
 
     }
 
-
     //call post search request to "second" api with json body, get json in return, process to SearchResult list obj
     public List<SearchResult> callSecondApi(String uri_value, String search_filter) {
         log.info("In call secondApi");
         RestTemplate restTemplate = new RestTemplate();
 
-        URI uri;
-        try {
-            uri = new URI(uri_value);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return null;
+        URI uri = stringToUriConverting(uri_value);
+        if(uri == null){
+            return Collections.emptyList();
         }
-
 
         RequestEntity request = RequestEntity.post(uri)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -125,6 +132,16 @@ public class MainService {
         return searchResults;
     }
 
+
+    private static URI stringToUriConverting(String uri_value){
+        try {
+            return new URI(uri_value);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            log.warning("Uri converting troubles with the string "+ uri_value);
+            return null;
+        }
+    }
 
     //* Transforms cropped from xml json to a SearchResult obj
     private static SearchResult jsonXmlValuesToSearchResult(JSONObject json) {
