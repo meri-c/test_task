@@ -133,7 +133,7 @@ public class MainService {
     }
 
 
-    private static URI stringToUriConverting(String uri_value){
+    public  URI stringToUriConverting(String uri_value){
         try {
             return new URI(uri_value);
         } catch (URISyntaxException e) {
@@ -144,7 +144,7 @@ public class MainService {
     }
 
     //* Transforms cropped from xml json to a SearchResult obj
-    private static SearchResult jsonXmlValuesToSearchResult(JSONObject json) {
+    public  SearchResult jsonXmlValuesToSearchResult(JSONObject json) {
         JSONObject price = json.getJSONObject("price");
         JSONObject location = json.getJSONObject("location");
 

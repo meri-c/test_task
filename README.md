@@ -27,4 +27,11 @@ Mysql and elastic search repository interfaces for CRUD operations.
 
 ### 5. Service
 Folder with all the services and objects, which take part in external api calling.
+
+
+### 6. Tests
+Since this is a test_task, it has two tests: for jpa repository and for external api caller, just for example.
+
+
  
+    
