@@ -30,7 +30,7 @@ Folder with all the services and objects, which take part in external api callin
 
 
 ### 6. Tests
-Since this is a test_task, it has two tests: for jpa repository and for external api caller, just for example.
+Since this is a test_task, it has two tests: for jpa repository and for external api callers, just for example.
 
 
  
