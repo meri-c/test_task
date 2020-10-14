@@ -117,7 +117,7 @@ public class MainService {
 
 
     //*Turns xml string to json, removes unnecessary parts, returns filled ArrayList of SearchResult objects
-    public List<SearchResult> processResultXmlToSearchResultList(String xml_string) {
+    private static List<SearchResult> processResultXmlToSearchResultList(String xml_string) {
         JSONObject json_xml_result = XML.toJSONObject(xml_string);
 
         List<SearchResult> searchResults = new ArrayList<>();
@@ -133,7 +133,7 @@ public class MainService {
     }
 
 
-    public  URI stringToUriConverting(String uri_value){
+    private static URI stringToUriConverting(String uri_value){
         try {
             return new URI(uri_value);
         } catch (URISyntaxException e) {
@@ -144,7 +144,7 @@ public class MainService {
     }
 
     //* Transforms cropped from xml json to a SearchResult obj
-    public  SearchResult jsonXmlValuesToSearchResult(JSONObject json) {
+    private static SearchResult jsonXmlValuesToSearchResult(JSONObject json) {
         JSONObject price = json.getJSONObject("price");
         JSONObject location = json.getJSONObject("location");
 
